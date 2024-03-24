@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CartSchema } from '../schema/cart';
+import { CartQuantitySchema, CartSchema } from '../schema/cart';
 import { prismaClient } from '..';
 import { Product } from '@prisma/client';
 import { NotFound } from '../exceptions/not-found';
@@ -48,7 +48,18 @@ export const deleteItemFromCart = async (req: Request, res: Response) => {
 }
 
 export const changeQuantity = async (req: Request, res: Response) => {
+    const validateData = CartQuantitySchema.parse(req.body)
 
+    const updateCart = await prismaClient.cartItem.update({
+        data: {
+            quantity: validateData.quantity
+        },
+        where: {
+            id: +req.params.id
+        }
+    });
+
+    res.json(updateCart)
 }
 
 export const getCart = async (req: Request, res: Response) => {
