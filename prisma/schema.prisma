@@ -89,13 +89,14 @@ model CartItem {
 }
 
 model Order {
-  id        Int      @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   netAmount Decimal
   address   String
-  user      User?    @relation(fields: [userId], references: [id])
+  status    OrderEventStatus @default(PENDING)
+  user      User?            @relation(fields: [userId], references: [id])
   userId    Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   products OrderProduct[]
   events   OrderEvent[]
