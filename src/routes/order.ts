@@ -5,7 +5,7 @@ import { cancelOrder, createOrder, getOrderById, listOrder } from "../controller
 
 const orderRouter: Router = Router();
 
-orderRouter.post("/", [authMiddleware], errorHandle(createOrder));
+orderRouter.post("/", [authMiddleware], createOrder);
 orderRouter.get("/", [authMiddleware], errorHandle(listOrder));
 orderRouter.post("/:id/cancel", [authMiddleware], errorHandle(cancelOrder));
 orderRouter.get("/:id", [authMiddleware], errorHandle(getOrderById));

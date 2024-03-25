@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { prismaClient } from '..';
+import { NotFound } from '../exceptions/not-found';
+import { ErrorCode } from '../exceptions/root';
 
 export const createOrder = async (req: Request, res: Response) => {
     return await prismaClient.$transaction(async (tx) => {
@@ -25,16 +27,20 @@ export const createOrder = async (req: Request, res: Response) => {
         })
         const order = await tx.order.create({
             data: {
-                userId: req.user.id,
+                user: {
+                    connect: {
+                        id: req.user.id,
+                    }
+                },
                 netAmount: price,
                 address: (address as any).formattedAddress,
                 products: {
-                    create: cartItems.map((cart) => {
-                        return {
-                            productId: cart.productId,
-                            quantity: cart.quantity
-                        }
-                    })
+                    create: cartItems.map((cart) => ({
+                        product: {
+                            connect: { id: cart.productId }
+                        },
+                        quantity: cart.quantity
+                    }))
                 }
             }
         });
@@ -55,15 +61,52 @@ export const createOrder = async (req: Request, res: Response) => {
 }
 
 export const listOrder = async (req: Request, res: Response) => {
+    const orders = await prismaClient.order.findMany({
+        where: {
+            userId: req.user.id
+        }
+    })
+    res.json(orders)
 
 }
 
 export const cancelOrder = async (req: Request, res: Response) => {
+    try {
+        const order = await prismaClient.order.update({
+            where: {
+                id: +req.params.id
+            },
+            data: {
+                status: "CANCELLED",
+                events: {
+                    create: {
+                        status: "CANCELLED",
+                    }
+                }
+            }
+        })
 
+        console.log(order)
+    } catch (err) {
+        throw new NotFound("Order Not Found!", ErrorCode.ORDER_NOT_FOUND)
+    }
 }
 
 export const getOrderById = async (req: Request, res: Response) => {
-
+    try {
+        const order = await prismaClient.order.findFirstOrThrow({
+            where: {
+                id: +req.params.id
+            },
+            include: {
+                products: true,
+                events: true
+            }
+        })
+        res.json(order)
+    } catch (err) {
+        throw new NotFound("Order Not Found!", ErrorCode.ORDER_NOT_FOUND)
+    }
 }
 
 
